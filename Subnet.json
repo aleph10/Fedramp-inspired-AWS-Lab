@@ -1,0 +1,76 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Baseline - Hardened Segmented Dormant Subnets in US-East-2",
+  "Resources": {
+    "PublicWebSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "CidrBlock": "10.0.1.0/28",
+        "AvailabilityZone": "us-east-2a",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-PublicWeb-Subnet" }
+        ]
+      }
+    },
+    "PrivateAppSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "CidrBlock": "10.0.2.0/28",
+        "AvailabilityZone": "us-east-2a",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-PrivateApp-Subnet" }
+        ]
+      }
+    },
+    "PrivateDBSubnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "CidrBlock": "10.0.3.0/28",
+        "AvailabilityZone": "us-east-2a",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-PrivateDB-Subnet" }
+        ]
+      }
+    },
+    "PublicWebSubnetAZ2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "CidrBlock": "10.0.1.16/28",
+        "AvailabilityZone": "us-east-2b",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-PublicWeb-Subnet-AZ2" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "PublicWebSubnetId": {
+      "Description": "The ID of the Public Web Subnet",
+      "Value": { "Ref": "PublicWebSubnet" },
+      "Export": { "Name": "PublicWebSubnet-ID" }
+    },
+    "PrivateAppSubnetId": {
+      "Description": "The ID of the Private App Subnet",
+      "Value": { "Ref": "PrivateAppSubnet" },
+      "Export": { "Name": "PrivateAppSubnet-ID" }
+    },
+    "PrivateDBSubnetId": {
+      "Description": "The ID of the Private DB Subnet",
+      "Value": { "Ref": "PrivateDBSubnet" },
+      "Export": { "Name": "PrivateDBSubnet-ID" }
+    },
+    "PublicWebSubnetAZ2Id": {
+      "Description": "The ID of the Second Public Web Subnet for Multi-AZ ALB Support",
+      "Value": { "Ref": "PublicWebSubnetAZ2" },
+      "Export": { "Name": "PublicWebSubnetAZ2-ID" }
+    }
+  }
+}

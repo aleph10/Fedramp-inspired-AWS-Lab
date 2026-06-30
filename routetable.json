@@ -1,0 +1,83 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Rev. 5 Low Baseline - Public and Private Routing Layer with NAT Gateway",
+  "Resources": {
+    "PublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-Public-RouteTable" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "DefaultPublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Fn::ImportValue": "SandboxIGW-ID" }
+      }
+    },
+    "PublicSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "SubnetId": { "Fn::ImportValue": "PublicWebSubnet-ID" }
+      }
+    },
+    "PublicSubnet2RouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": { "Ref": "PublicRouteTable" },
+        "SubnetId": { "Fn::ImportValue": "PublicWebSubnetAZ2-ID" }
+      }
+    },
+    "NatEIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-NatEIP" }
+        ]
+      }
+    },
+    "NatGateway": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties": {
+        "AllocationId": { "Fn::GetAtt": [ "NatEIP", "AllocationId" ] },
+        "SubnetId": { "Fn::ImportValue": "PublicWebSubnet-ID" },
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-NATGW" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "PrivateRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-Private-RouteTable" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "DefaultPrivateRoute": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable" },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": { "Ref": "NatGateway" }
+      }
+    },
+    "PrivateAppSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": { "Ref": "PrivateRouteTable" },
+        "SubnetId": { "Fn::ImportValue": "PrivateAppSubnet-ID" }
+      }
+    }
+  }
+}

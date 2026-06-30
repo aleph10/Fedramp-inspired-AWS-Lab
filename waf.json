@@ -1,0 +1,48 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Rev. 5 Low Baseline - AWS WAF Edge Protection Perimeter",
+  "Resources": {
+    "WAFWebACL": {
+      "Type": "AWS::WAFv2::WebACL",
+      "Properties": {
+        "Name": "FedRAMP-Low-Edge-Scrubber",
+        "Scope": "REGIONAL",
+        "DefaultAction": { "Allow": {} },
+        "VisibilityConfig": {
+          "SampledRequestsEnabled": true,
+          "CloudWatchMetricsEnabled": true,
+          "MetricName": "SandboxWAFMetrics"
+        },
+        "Rules": [
+          {
+            "Name": "AWS-AWSManagedRulesCommonRuleSet",
+            "Priority": 0,
+            "Statement": {
+              "ManagedRuleGroupStatement": {
+                "VendorName": "AWS",
+                "Name": "AWSManagedRulesCommonRuleSet"
+              }
+            },
+            "OverrideAction": { "None": {} },
+            "VisibilityConfig": {
+              "SampledRequestsEnabled": true,
+              "CloudWatchMetricsEnabled": true,
+              "MetricName": "CoreRules"
+            }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-WAF" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "WAFALBAssociation": {
+      "Type": "AWS::WAFv2::WebACLAssociation",
+      "Properties": {
+        "ResourceArn": { "Fn::ImportValue": "Sandbox-ALB-ARN" },
+        "WebACLArn": { "Fn::GetAtt": [ "WAFWebACL", "Arn" ] }
+      }
+    }
+  }
+}

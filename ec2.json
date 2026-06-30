@@ -1,0 +1,54 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Rev. 5 Low Baseline - Secure Application Compute Layer",
+  "Parameters": {
+    "LatestAmiId": {
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+      "Default": "/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64",
+      "Description": "Automatically retrieves the latest audited Amazon Linux 2023 Minimal AMI ID"
+    }
+  },
+  "Resources": {
+    "AppEC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": "t3.micro",
+        "ImageId": { "Ref": "LatestAmiId" },
+        "SubnetId": { "Fn::ImportValue": "PrivateAppSubnet-ID" },
+        "SecurityGroupIds": [
+          { "Fn::ImportValue": "Sandbox-AppSG-ID" }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "\n",
+              [
+                "#!/bin/bash",
+                "mkdir -p /var/www/html",
+                "echo \"<h1>Hello from EC2: $(hostname)</h1>\" > /var/www/html/index.html",
+                "cd /var/www/html",
+                "nohup python3 -m http.server 8080 > /dev/null 2>&1 &"
+              ]
+            ]
+          }
+        },
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-App-Server" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "AppInstanceId": {
+      "Description": "The ID of the App EC2 Instance",
+      "Value": { "Ref": "AppEC2Instance" },
+      "Export": { "Name": "Sandbox-AppInstance-ID" }
+    },
+    "AppInstancePrivateIp": {
+      "Description": "The private internal IP address of the app server",
+      "Value": { "Fn::GetAtt": [ "AppEC2Instance", "PrivateIp" ] },
+      "Export": { "Name": "Sandbox-AppPrivateIP" }
+    }
+  }
+}

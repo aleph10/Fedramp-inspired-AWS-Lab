@@ -1,0 +1,70 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Rev. 5 Low Baseline - Secure HTTP Application Load Balancer Ingress",
+  "Resources": {
+    "WebTierTargetGroup": {
+      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties": {
+        "Name": "Sandbox-App-TargetGroup",
+        "Port": 8080,
+        "Protocol": "HTTP",
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "HealthCheckPort": "8080",
+        "HealthCheckProtocol": "HTTP",
+        "HealthCheckPath": "/",
+        "HealthCheckIntervalSeconds": 30,
+        "HealthyThresholdCount": 2,
+        "UnhealthyThresholdCount": 2,
+        "Targets": [
+          { "Id": { "Fn::ImportValue": "Sandbox-AppInstance-ID" } }
+        ],
+        "TargetType": "instance"
+      }
+    },
+    "ApplicationLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties": {
+        "Name": "Sandbox-Ingress-ALB",
+        "Subnets": [
+          { "Fn::ImportValue": "PublicWebSubnet-ID" },
+          { "Fn::ImportValue": "PublicWebSubnetAZ2-ID" }
+        ],
+        "SecurityGroups": [
+          { "Fn::ImportValue": "Sandbox-ALBSG-ID" }
+        ],
+        "Type": "application",
+        "Scheme": "internet-facing",
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-ALB" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "ALBListenerHTTP": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "Properties": {
+        "LoadBalancerArn": { "Ref": "ApplicationLoadBalancer" },
+        "Port": 80,
+        "Protocol": "HTTP",
+        "DefaultActions": [
+          {
+            "Type": "forward",
+            "TargetGroupArn": { "Ref": "WebTierTargetGroup" }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ALBArn": {
+      "Description": "The Amazon Resource Name of the ALB for WAF attachment",
+      "Value": { "Ref": "ApplicationLoadBalancer" },
+      "Export": { "Name": "Sandbox-ALB-ARN" }
+    },
+    "ALBDnsName": {
+      "Description": "The public URL endpoint of your ALB architecture",
+      "Value": { "Fn::GetAtt": [ "ApplicationLoadBalancer", "DNSName" ] },
+      "Export": { "Name": "Sandbox-ALB-DNS" }
+    }
+  }
+}

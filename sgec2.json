@@ -1,0 +1,114 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Rev. 5 Low Baseline - Secure Tiered Security Groups (Decoupled)",
+  "Resources": {
+    "ALBSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for ALB - allows inbound HTTP/HTTPS from internet",
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 443,
+            "ToPort": 443,
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 80,
+            "ToPort": 80,
+            "CidrIp": "0.0.0.0/0"
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-ALB-SG" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "AppEC2SG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for App EC2",
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "SecurityGroupIngress": [],
+        "SecurityGroupEgress": [],
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-App-SG" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "DBSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Security group for DB tier",
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "SecurityGroupIngress": [],
+        "SecurityGroupEgress": [],
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-DB-SG" },
+          { "Key": "Compliance", "Value": "FedRAMP-Low" }
+        ]
+      }
+    },
+    "ALBToAppEgressRule": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": { "Ref": "ALBSG" },
+        "IpProtocol": "tcp",
+        "FromPort": 8080,
+        "ToPort": 8080,
+        "DestinationSecurityGroupId": { "Ref": "AppEC2SG" }
+      }
+    },
+    "AppFromALBIngressRule": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "AppEC2SG" },
+        "IpProtocol": "tcp",
+        "FromPort": 8080,
+        "ToPort": 8080,
+        "SourceSecurityGroupId": { "Ref": "ALBSG" }
+      }
+    },
+    "AppToDBEgressRule": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": { "Ref": "AppEC2SG" },
+        "IpProtocol": "tcp",
+        "FromPort": 3306,
+        "ToPort": 3306,
+        "DestinationSecurityGroupId": { "Ref": "DBSG" }
+      }
+    },
+    "DBFromAppIngressRule": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "DBSG" },
+        "IpProtocol": "tcp",
+        "FromPort": 3306,
+        "ToPort": 3306,
+        "SourceSecurityGroupId": { "Ref": "AppEC2SG" }
+      }
+    }
+  },
+  "Outputs": {
+    "ALBSecurityGroupId": {
+      "Description": "The ID of the ALB Security Group",
+      "Value": { "Ref": "ALBSG" },
+      "Export": { "Name": "Sandbox-ALBSG-ID" }
+    },
+    "AppEC2SecurityGroupId": {
+      "Description": "The ID of the App EC2 Security Group",
+      "Value": { "Ref": "AppEC2SG" },
+      "Export": { "Name": "Sandbox-AppSG-ID" }
+    },
+    "DBSecurityGroupId": {
+      "Description": "The ID of the DB Security Group",
+      "Value": { "Ref": "DBSG" },
+      "Export": { "Name": "Sandbox-DBSG-ID" }
+    }
+  }
+}

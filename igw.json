@@ -1,0 +1,29 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Baseline - Modular Internet Gateway Stack",
+  "Resources": {
+    "InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-IGW" },
+          { "Key": "Compliance", "Value": "FedRAMP-Moderate" }
+        ]
+      }
+    },
+    "VPCGatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": { "Fn::ImportValue": "SandboxVPC-ID" },
+        "InternetGatewayId": { "Ref": "InternetGateway" }
+      }
+    }
+  },
+  "Outputs": {
+    "InternetGatewayId": {
+      "Description": "The ID of the Internet Gateway",
+      "Value": { "Ref": "InternetGateway" },
+      "Export": { "Name": "SandboxIGW-ID" }
+    }
+  }
+}

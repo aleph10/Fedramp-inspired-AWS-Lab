@@ -1,0 +1,25 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "FedRAMP Baseline - Master VPC Stack",
+  "Resources": {
+    "ResumeSandboxVPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsSupport": true,
+        "EnableDnsHostnames": true,
+        "Tags": [
+          { "Key": "Name", "Value": "Sandbox-VPC" },
+          { "Key": "Compliance", "Value": "FedRAMP-Inspired" }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "ExportedVpcId": {
+      "Description": "The ID of the master sandbox VPC",
+      "Value": { "Ref": "ResumeSandboxVPC" },
+      "Export": { "Name": "SandboxVPC-ID" }
+    }
+  }
+}
